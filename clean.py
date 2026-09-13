@@ -90,6 +90,7 @@ def _numeric_column(rows, index):
 
 def fill_missing(header, rows, strategy="mean"):
     """
+    الدالة المطلوب اضافتها للمختبر السابع
     يعالج الخلايا الفارغة في الأعمدة الرقمية.
 
     strategy = mean   → المتوسط الحسابي
