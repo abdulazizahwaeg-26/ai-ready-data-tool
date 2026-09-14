@@ -7,6 +7,7 @@ ai-ready-data-tool — أداة تجهيز ملفات CSV للنمذجة.
 الاستخدام:
     python clean.py                      # يقرأ الإعدادات من config.yaml
     python clean.py --input data/raw/x.csv --output output/x.csv
+Keep focusing on your goal, and don't stop until you achieve it.
 """
 
 import argparse
@@ -16,6 +17,7 @@ import re
 import statistics
 import sys
 
+# here is the path to the configuration file
 CONFIG_PATH = "config.yaml"
 
 
@@ -53,6 +55,10 @@ def read_rows(path):
 
 
 def write_rows(header, rows, path):
+"""يكتب ملف
+هنا سوف يتم فراءة الملفات وكتابتها
+"""
+
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -63,10 +69,7 @@ def write_rows(header, rows, path):
 
 # ─────────────────────────── التحويلات ───────────────────────────
 def normalize_columns(header):
-    """يوحّد أسماء الأعمدة: حروف صغيرة، شرطة سفلية، بلا رموز.
-    هنا يمكنك إضافة أي قواعد إضافية لتوحيد أسماء الأعمدة حسب الحاجة. 
-    وهو المطلوب في الفرع الجديد
-    """
+    """يوحّد أسماء الأعمدة: حروف صغيرة، شرطة سفلية، بلا رموز."""
     out = []
     for name in header:
         name = name.strip().lower()
@@ -93,12 +96,12 @@ def _numeric_column(rows, index):
 
 def fill_missing(header, rows, strategy="mean"):
     """
-    الدالة المطلوب اضافتها للمختبر السابع
     يعالج الخلايا الفارغة في الأعمدة الرقمية.
 
     strategy = mean   → المتوسط الحسابي
     strategy = median → الوسيط  (أمتن أمام القيم الشاذة)
     strategy = drop   → حذف الصف كاملاً
+    fix-empty-file 
     """
     if strategy == "drop":
         return [r for r in rows if all(str(c).strip() != "" for c in r)]
@@ -116,6 +119,9 @@ def fill_missing(header, rows, strategy="mean"):
 
 
 def drop_duplicates(rows):
+    """
+    يحذف الصفوف المكررة من البيانات.
+    """
     seen, out = set(), []
     for row in rows:
         key = tuple(row)
