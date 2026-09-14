@@ -55,6 +55,7 @@ def read_rows(path):
 
 
 def write_rows(header, rows, path):
+
 """يكتب ملف
 هنا سوف يتم فراءة الملفات وكتابتها
 """
@@ -101,6 +102,7 @@ def fill_missing(header, rows, strategy="mean"):
     strategy = mean   → المتوسط الحسابي
     strategy = median → الوسيط  (أمتن أمام القيم الشاذة)
     strategy = drop   → حذف الصف كاملاً
+    this is what we need to do to handle missing values in the dataset.
     fix-empty-file 
     """
     if strategy == "drop":
