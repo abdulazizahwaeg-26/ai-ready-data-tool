@@ -17,6 +17,7 @@ import re
 import statistics
 import sys
 
+# here is the path to the configuration file
 CONFIG_PATH = "config.yaml"
 
 
