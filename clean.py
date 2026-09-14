@@ -102,7 +102,10 @@ def fill_missing(header, rows, strategy="mean"):
     strategy = median → الوسيط  (أمتن أمام القيم الشاذة)
     strategy = drop   → حذف الصف كاملاً
     this is what we need to do to handle missing values in the dataset.
+<<<<<<< HEAD
     fix-empty-file 
+=======
+>>>>>>> f5cdfa1 (fix: parallel reading fixing added)
     """
     if strategy == "drop":
         return [r for r in rows if all(str(c).strip() != "" for c in r)]
