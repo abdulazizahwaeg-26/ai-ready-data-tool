@@ -43,6 +43,4 @@ ai-ready-data-tool/
 
 ---
 
-2nd Day practice
 AI Approach · نهج الذكاء الاصطناعي — الشريك الرسمي المُقدِّم للمسار التدريبي
-V2
