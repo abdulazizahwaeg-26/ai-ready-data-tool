@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from clean import clean
 from enrich import p
 
-RAW = os.path.join(os.path.dirname(__file__), "fixtures", "sales_sample.csv")
+RAW = "data/raw/sales_sample.csv"
 
 # الناتج المرجعي: أعمدة (gross, discount_amount, tax, total, region_code,
 # is_outlier, is_high_value) لكل طلب، كما يُنتجها النظام اليوم.

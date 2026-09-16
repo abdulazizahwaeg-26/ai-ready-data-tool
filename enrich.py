@@ -1,180 +1,207 @@
-"""إضافة أعمدة مشتقة إلى ملف CSV نظيف تمهيداً للنمذجة."""
+# enrich.py
+# آخر تعديل: قبل أربعة عشر شهراً — كتبه زميل غادر الفريق.
+# ملاحظة مكتوبة في أعلى الملف: "لا تلمس شيئاً، الملف يعمل."
+#
+# يقرأ ملف CSV نظيفاً (مخرَج clean.py) ويضيف أعمدة مشتقّة للنمذجة.
 
 import argparse
 import csv
 import os
 import statistics
 import sys
-from dataclasses import dataclass
 
-TAX_RATE = 0.15
-HIGH_VALUE_THRESHOLD = 1000
-REGION_CODES = {"sanaa": 1, "aden": 2, "taiz": 3, "hodeidah": 4}
-NEW_COLUMNS = [
-    "gross",
-    "discount_amount",
-    "tax",
-    "total",
-    "region_code",
-    "is_outlier",
-    "is_high_value",
-]
+NUM = 0.15        # الضريبة
+NUM2 = 1000       # الحد
+R = {"sanaa": 1, "aden": 2, "taiz": 3, "hodeidah": 4}
 
 
-@dataclass(frozen=True)
-class ColumnIndexes:
-    units: int
-    price: int
-    discount: int
-    region: int
+# ─────────────────────────────────────────────────────────────
+class ThresholdStrategy:
+    def get(self, rows):
+        raise NotImplementedError
 
 
-def table_read(path):
-    """يقرأ الصفوف غير الفارغة من ملف CSV، أو يعيد قائمة فارغة إذا لم يوجد."""
-    if not os.path.exists(path):
-        print(f"warning: not found: {path}", file=sys.stderr)
+class FixedThresholdStrategy(ThresholdStrategy):
+    def get(self, rows):
+        return NUM2
+
+
+class AdaptiveThresholdStrategy(ThresholdStrategy):
+    def get(self, rows):
+        return NUM2
+
+
+class ThresholdStrategyFactory:
+    @staticmethod
+    def create(k):
+        if k == "fixed":
+            return FixedThresholdStrategy()
+        elif k == "adaptive":
+            return AdaptiveThresholdStrategy()
+        else:
+            return FixedThresholdStrategy()
+
+
+# ─────────────────────────────────────────────────────────────
+def getData(f):
+    if not os.path.exists(f):
+        print("warning: not found: " + f, file=sys.stderr)
         return []
-    with open(path, newline="", encoding="utf-8-sig") as file:
-        return [row for row in csv.reader(file) if any(cell.strip() for cell in row)]
+    with open(f, newline="", encoding="utf-8-sig") as fh:
+        return [r for r in csv.reader(fh) if any(c.strip() for c in r)]
 
 
-def _column_index(header, name):
-    return header.index(name) if name in header else -1
+def calc2(a, b):
+    return a * b
 
 
-def _number(row, index):
-    """يحوّل خلية إلى رقم، مع الحفاظ على قيمة الصفر عند الخلايا غير الصالحة."""
-    try:
-        return float(row[index])
-    except (IndexError, ValueError):
-        return 0.0
+# def export_xml(rows, path):
+#     كان مطلوباً في اجتماع الربع الثاني. لم يُستخدم قط.
+#     with open(path, "w") as f:
+#         f.write("<rows>")
 
 
-def _column_values(rows, index):
-    return [_number(row, index) for row in rows]
+def p(f, o, t=True, d=False, m="normal", v=0):
+    if m == "future":
+        raise NotImplementedError("سيُدعم لاحقاً")
 
-
-def _region_code(row, region_index):
-    if region_index < 0 or region_index >= len(row):
-        return 0
-    return REGION_CODES.get(row[region_index].strip().lower(), 0)
-
-
-def _outlier_flags(units):
-    if len(units) > 1:
-        mean = statistics.mean(units)
-        standard_deviation = statistics.pstdev(units)
-    else:
-        mean = 0.0
-        standard_deviation = 0.0
-
-    flags = [
-        int(standard_deviation > 0 and units_sold > mean + 2 * standard_deviation)
-        for units_sold in units
-    ]
-    return flags, mean, standard_deviation
-
-
-def _print_region_counts(rows, region_index):
-    for region, code in REGION_CODES.items():
-        count = sum(
-            1
-            for row in rows
-            if region_index >= 0
-            and region_index < len(row)
-            and row[region_index].strip().lower() == region
-        )
-        print(f"  {region}: {count}")
-
-
-def _financial_values(rows, columns, charge_tax):
-    units = _column_values(rows, columns.units)
-    prices = _column_values(rows, columns.price)
-    discounts = _column_values(rows, columns.discount)
-    gross_values = [units_sold * price for units_sold, price in zip(units, prices)]
-    discount_values = [
-        gross * discount / 100 for gross, discount in zip(gross_values, discounts)
-    ]
-    tax_values = [
-        (gross - discount) * TAX_RATE if charge_tax else 0.0
-        for gross, discount in zip(gross_values, discount_values)
-    ]
-    totals = [
-        gross - discount + tax
-        for gross, discount, tax in zip(gross_values, discount_values, tax_values)
-    ]
-    outlier_flags, mean, standard_deviation = _outlier_flags(units)
-    return gross_values, discount_values, tax_values, totals, outlier_flags, mean, standard_deviation
-
-
-def _derived_rows(rows, columns, charge_tax):
-    financials = _financial_values(rows, columns, charge_tax)
-    gross_values, discount_values, tax_values, totals, outlier_flags, mean, standard_deviation = (
-        financials
-    )
-    region_codes = [_region_code(row, columns.region) for row in rows]
-
-    derived = []
-    for index, row in enumerate(rows):
-        derived.append(
-            row
-            + [
-                f"{gross_values[index]:.2f}",
-                f"{discount_values[index]:.2f}",
-                f"{tax_values[index]:.2f}",
-                f"{totals[index]:.2f}",
-                str(region_codes[index]),
-                str(outlier_flags[index]),
-                str(int(totals[index] > HIGH_VALUE_THRESHOLD)),
-            ]
-        )
-    return derived, mean, standard_deviation
-
-
-def _write_table(header, rows, output_path):
-    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-    with open(output_path, "w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow(header + NEW_COLUMNS)
-        writer.writerows(rows)
-
-
-def p(input_path, output_path, charge_tax=True, drop_outliers=False, verbose=0):
-    """يثري ملفاً نظيفاً ويحافظ على عقد الإخراج القديم."""
-    table = table_read(input_path)
-    if not table:
+    l = getData(f)
+    if not l:
         return None
+    h = l[0]
+    r = l[1:]
 
-    header, rows = table[0], table[1:]
-    columns = ColumnIndexes(
-        units=_column_index(header, "units_sold"),
-        price=_column_index(header, "unit_price"),
-        discount=_column_index(header, "discount"),
-        region=_column_index(header, "region"),
-    )
-    data, mean, standard_deviation = _derived_rows(rows, columns, charge_tax)
-    if drop_outliers:
-        data = [row for row in data if row[-2] == "0"]
-    if verbose:
-        _print_region_counts(rows, columns.region)
-    _write_table(header, data, output_path)
-    return {"n": len(data), "th": HIGH_VALUE_THRESHOLD, "mu": mean, "sd": standard_deviation}
+    # x = عمود الكمية ، y = عمود السعر ، z = عمود الخصم
+    x = -1
+    y = -1
+    z = -1
+    for i in range(len(h)):
+        if h[i] == "units_sold":
+            x = i
+        if h[i] == "unit_price":
+            y = i
+        if h[i] == "discount":
+            z = i
+
+    n1 = []
+    for row in r:
+        try:
+            a = float(row[x])
+        except:
+            a = 0.0
+        try:
+            b = float(row[y])
+        except:
+            b = 0.0
+        n1.append(a * b)
+
+    n2 = []
+    for i in range(len(r)):
+        try:
+            c = float(r[i][z])
+        except:
+            c = 0.0
+        n2.append(n1[i] * c / 100)
+
+    n3 = []
+    for i in range(len(r)):
+        net = n1[i] - n2[i]
+        if t:
+            n3.append(net * NUM)
+        else:
+            n3.append(0.0)
+
+    codes = []
+    for row in r:
+        got = 0
+        for i in range(len(h)):
+            if h[i] == "region":
+                v2 = row[i].strip().lower()
+                if v2 != "":
+                    if v2 in R:
+                        got = R[v2]
+                    else:
+                        got = 0
+        codes.append(got)
+
+    units = []
+    for row in r:
+        try:
+            units.append(float(row[x]))
+        except:
+            units.append(0.0)
+    if len(units) > 1:
+        mu = statistics.mean(units)
+        sd = statistics.pstdev(units)
+    else:
+        mu = 0.0
+        sd = 0.0
+    flag1 = []
+    for u in units:
+        if sd > 0 and u > mu + 2 * sd:
+            flag1.append(1)
+        else:
+            flag1.append(0)
+
+    st = ThresholdStrategyFactory.create("fixed")
+    th = st.get(r)
+    flag2 = []
+    for i in range(len(r)):
+        tot = n1[i] - n2[i] + n3[i]
+        if tot > th:
+            flag2.append(1)
+        else:
+            flag2.append(0)
+
+    data2 = []
+    for i in range(len(r)):
+        tot = n1[i] - n2[i] + n3[i]
+        data2.append(r[i] + [
+            "%.2f" % n1[i], "%.2f" % n2[i], "%.2f" % n3[i], "%.2f" % tot,
+            str(codes[i]), str(flag1[i]), str(flag2[i]),
+        ])
+
+    if d:
+        tmp = []
+        for row in data2:
+            if row[-2] == "0":
+                tmp.append(row)
+        data2 = tmp
+
+    if v > 0:
+        rr = {"sanaa": 1, "aden": 2, "taiz": 3, "hodeidah": 4}
+        for k in rr:
+            cnt = 0
+            for row in r:
+                for i in range(len(h)):
+                    if h[i] == "region" and row[i].strip().lower() == k:
+                        cnt += 1
+            print("  " + k + ": " + str(cnt))
+
+    h2 = h + ["gross", "discount_amount", "tax", "total",
+              "region_code", "is_outlier", "is_high_value"]
+    os.makedirs(os.path.dirname(o) or ".", exist_ok=True)
+    with open(o, "w", newline="", encoding="utf-8") as f2:
+        w = csv.writer(f2)
+        w.writerow(h2)
+        w.writerows(data2)
+    return {"n": len(data2), "th": th, "mu": mu, "sd": sd}
 
 
 def main():
-    parser = argparse.ArgumentParser(description="enrich")
-    parser.add_argument("--input", default="output/clean.csv")
-    parser.add_argument("--output", default="output/enriched.csv")
-    parser.add_argument("--no-tax", action="store_true")
-    parser.add_argument("--drop-outliers", action="store_true")
-    parser.add_argument("-v", action="count", default=0)
-    args = parser.parse_args()
-    result = p(args.input, args.output, not args.no_tax, args.drop_outliers, args.v)
-    if result is None:
+    ap = argparse.ArgumentParser(description="enrich")
+    ap.add_argument("--input", default="output/clean.csv")
+    ap.add_argument("--output", default="output/enriched.csv")
+    ap.add_argument("--no-tax", action="store_true")
+    ap.add_argument("--drop-outliers", action="store_true")
+    ap.add_argument("-v", action="count", default=0)
+    a = ap.parse_args()
+    res = p(a.input, a.output, not a.no_tax, a.drop_outliers, "normal", a.v)
+    if res is None:
         print("[fail] no input")
         return
-    print(f"[ok] {args.input} -> {args.output}")
-    print(f"     rows={result['n']}  threshold={result['th']}")
+    print("[ok] " + a.input + " -> " + a.output)
+    print("     rows=" + str(res["n"]) + "  threshold=" + str(res["th"]))
 
 
 if __name__ == "__main__":
