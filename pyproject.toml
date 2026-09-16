@@ -1,0 +1,31 @@
+[project]
+name = "ai-ready-data-tool"
+version = "0.2.0"
+description = "أداة تجهيز بيانات جاهزة للنمذجة — مشروع برنامج تأهيل مهندسي الذكاء الاصطناعي"
+requires-python = ">=3.9"
+
+# ── إعدادات المدقّق ────────────────────────────────────────────────
+# تشغيل:  ruff check .
+# الإصلاح الآمن تلقائياً:  ruff check . --fix
+[tool.ruff]
+line-length = 100
+exclude = ["solutions"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",    # pycodestyle — قواعد PEP 8
+    "F",         # pyflakes — أخطاء حقيقية لا ذوق
+    "N",         # pep8-naming — معايير التسمية
+    "C90",       # mccabe — التعقيد الدوري
+    "PLR",       # pylint refactor — الدوال المتضخّمة والأرقام السحرية
+    "FBT",       # boolean trap — المعاملات المنطقية الموضعية
+    "BLE",       # blind except — ابتلاع الاستثناءات
+    "ERA",       # eradicate — كود معلَّق ميّت
+    "SIM",       # flake8-simplify — تبسيطات مباشرة
+    "RET",       # flake8-return — عودة أوضح
+    "ARG",       # معاملات لا تُستخدم
+]
+ignore = ["E501"]   # طول السطر يُدار بالمنسّق لا بالمدقّق
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
