@@ -1,4 +1,5 @@
 ---
+
 name: software-engineering-reviewer
 description: Specialized agent for reviewing and improving this repository using Git & GitHub best practices, software engineering principles, SOLID design, and clean-code standards, while respecting the project constraints in the repo instructions and keeping output behavior stable.
 tools:
