@@ -1,0 +1,10 @@
+order_id,customer_name,region,units_sold,unit_price,discount,gross,discount_amount,tax,total,region_code,is_outlier,is_high_value
+1001,Ahmed Saleh,Sanaa,12,45.5,5,546.00,27.30,77.81,596.51,1,0,0
+1002,Layla Mansour,Aden,38.7143,45.5,0,1761.50,0.00,264.23,2025.73,2,0,1
+1003,Omar Ali,Taiz,8,78.6111,10,628.89,62.89,84.90,650.90,3,0,0
+1004,Huda Nasser,Sanaa,21,45.5,5,955.50,47.77,136.16,1043.88,1,0,1
+1005,Ahmed Saleh,Sanaa,12,45.5,5,546.00,27.30,77.81,596.51,1,0,0
+1006,Kamal Yahya,Hodeidah,3,120.0,6.6667,360.00,24.00,50.40,386.40,4,0,0
+1007,Nada Fares,Aden,15,120.0,15,1800.00,270.00,229.50,1759.50,2,0,1
+1008,Salem Awad,Taiz,38.7143,120.0,0,4645.72,0.00,696.86,5342.57,3,0,1
+1009,Wholesale Co,Sanaa,200,45.5,20,9100.00,1820.00,1092.00,8372.00,1,1,1
