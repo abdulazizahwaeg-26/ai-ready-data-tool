@@ -4,6 +4,12 @@ version = "0.2.0"
 description = "أداة تجهيز بيانات جاهزة للنمذجة — مشروع برنامج تأهيل مهندسي الذكاء الاصطناعي"
 requires-python = ">=3.9"
 
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
 # ── إعدادات المدقّق ────────────────────────────────────────────────
 # تشغيل:  ruff check .
 # الإصلاح الآمن تلقائياً:  ruff check . --fix
